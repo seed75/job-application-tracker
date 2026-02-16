@@ -1,4 +1,7 @@
+import { setDefaultResultOrder } from 'dns';
 import pg from 'pg';
+
+setDefaultResultOrder('ipv4first');
 
 const { Pool } = pg;
 
