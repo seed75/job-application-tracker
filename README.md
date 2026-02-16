@@ -1,32 +1,32 @@
 # Job Application Tracker
 
-A full-stack web application I built to keep track of all the companies I applied to during my job search. When applying to multiple companies at the same time, it gets hard to remember where I applied and what stage each one is at — so I built this to manage it all in one place.
+A full-stack web application I built to keep track of all the companies I applied to during my job search. When applying to multiple companies at the same time, it gets hard to remember where I applied and what stage each one is at, so I built this to manage it all in one place.
 
-## Features
+!! Features
 
-- **Sign up / Sign in** — JWT-based authentication with bcrypt password hashing
-- **Application management** — Add, update, and delete job applications with company, position, and status
-- **Status filtering** — Filter by Wishlist / Applied / Screening / Interview / Offer / Rejected / Withdrawn
-- **Status history** — Tracks every status change per application
-- **Dashboard summary** — Aggregated counts by status
+- Sign up / Sign in — JWT-based authentication with bcrypt password hashing
+- Application management — Add, update, and delete job applications with company, position, and status
+- Status filtering — Filter by Wishlist / Applied / Screening / Interview / Offer / Rejected / Withdrawn
+- Status history — Tracks every status change per application
+- Dashboard summary — Aggregated counts by status
 
-## Tech Stack
+!! Tech Stack
 
-**Backend**
+*Backend
 - Node.js + Express.js
 - PostgreSQL (Supabase)
 - JWT authentication, bcrypt password hashing
 - Controller → Service → Repository architecture
 
-**Frontend**
+*Frontend
 - React 18 + Vite
 - Tailwind CSS
 - React Router v6
 
-**Testing**
+*Testing
 - Playwright E2E tests
 
-## Project Structure
+!! Project Structure
 
 ```
 .
@@ -59,14 +59,14 @@ A full-stack web application I built to keep track of all the companies I applie
 └── playwright.config.js
 ```
 
-## Getting Started
+!! Getting Started
 
-### Prerequisites
+! Prerequisites
 
 - Node.js 18+
 - PostgreSQL (or a Supabase account)
 
-### 1. Database Setup
+1. Database Setup
 
 Run the SQL files in `db/migrations/` in order using the Supabase SQL Editor.
 
@@ -77,7 +77,7 @@ Run the SQL files in `db/migrations/` in order using the Supabase SQL Editor.
 -- ...
 ```
 
-### 2. Run the Backend
+2. Run the Backend
 
 ```bash
 cd backend
@@ -89,7 +89,7 @@ npm run dev
 
 Backend runs at `http://localhost:3001`.
 
-### 3. Run the Frontend
+3. Run the Frontend
 
 ```bash
 cd frontend
@@ -99,7 +99,7 @@ npm run dev
 
 Frontend runs at `http://localhost:5173`.
 
-### 4. Run E2E Tests
+4. Run E2E Tests
 
 ```bash
 # From the project root
@@ -108,7 +108,7 @@ npx playwright install chromium
 npx playwright test
 ```
 
-## Environment Variables
+!! Environment Variables
 
 Set the following in `backend/.env`:
 
@@ -119,7 +119,7 @@ JWT_EXPIRES_IN=7d
 PORT=3001
 ```
 
-## API Endpoints
+!! API Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
