@@ -1,11 +1,13 @@
 import 'dotenv/config';
 import express from 'express';
+import cors from 'cors';
 import authRoutes from './modules/auth/auth.routes.js';
 import applicationsRoutes from './modules/applications/applications.routes.js';
 import dashboardRoutes from './modules/dashboard/dashboard.routes.js';
 
 const app = express();
 
+app.use(cors({ origin: process.env.FRONTEND_URL ?? '*' }));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
