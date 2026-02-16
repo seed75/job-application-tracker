@@ -1,29 +1,88 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
+function Toast({ message, type, onClose }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 4000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const isError = type === 'error';
+
+  return (
+    <div
+      className={`fixed top-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-lg text-sm font-medium
+        transition-all duration-300 animate-toast
+        ${isError
+          ? 'bg-red-500 text-white'
+          : 'bg-emerald-500 text-white'
+        }`}
+      style={{ minWidth: 260, maxWidth: 400 }}
+    >
+      {isError ? (
+        <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+        </svg>
+      ) : (
+        <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      )}
+      <span className="flex-1">{message}</span>
+      <button
+        onClick={onClose}
+        className="shrink-0 opacity-70 hover:opacity-100 transition-opacity"
+        aria-label="Close"
+      >
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 export default function LoginPage() {
-  const [mode, setMode]         = useState('login'); // 'login' | 'register'
+  const [mode, setMode]         = useState('login');
   const [name, setName]         = useState('');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError]       = useState('');
+  const [toast, setToast]       = useState(null); // { message, type }
   const [loading, setLoading]   = useState(false);
   const { login } = useAuth();
   const navigate  = useNavigate();
 
+  function showToast(message, type = 'error') {
+    setToast({ message, type });
+  }
+
+  function clearToast() {
+    setToast(null);
+  }
+
   function switchMode(next) {
     setMode(next);
-    setError('');
+    setToast(null);
     setName('');
     setEmail('');
     setPassword('');
   }
 
+  function getErrorMessage(raw) {
+    if (!raw) return 'Something went wrong. Please try again.';
+    const lower = raw.toLowerCase();
+    if (lower.includes('invalid credentials')) return 'Incorrect email or password.';
+    if (lower.includes('email already in use')) return 'This email is already registered. Try signing in.';
+    if (lower.includes('password') && lower.includes('8')) return 'Password must be at least 8 characters.';
+    if (lower.includes('email')) return 'Please enter a valid email address.';
+    return raw;
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
-    setError('');
+    setToast(null);
     setLoading(true);
     try {
       const payload = mode === 'register'
@@ -32,7 +91,7 @@ export default function LoginPage() {
       login(payload.token);
       navigate('/');
     } catch (err) {
-      setError(err.message);
+      showToast(getErrorMessage(err.message), 'error');
     } finally {
       setLoading(false);
     }
@@ -43,6 +102,14 @@ export default function LoginPage() {
       className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-blue-50"
       data-testid="login-page"
     >
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={clearToast}
+        />
+      )}
+
       <div className="w-full max-w-md px-6">
         {/* Header */}
         <div className="text-center mb-8">
@@ -85,12 +152,6 @@ export default function LoginPage() {
               Sign up
             </button>
           </div>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-              <p className="text-red-600 text-sm" data-testid="login-error">{error}</p>
-            </div>
-          )}
 
           {mode === 'register' && (
             <div className="space-y-1">
