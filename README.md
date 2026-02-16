@@ -1,52 +1,50 @@
 # Job Application Tracker
 
-취업 준비 과정에서 지원한 회사들을 한눈에 관리하기 위해 만든 풀스택 웹 애플리케이션입니다.
-여러 회사에 지원하다 보면 어디에 냈는지, 어떤 상태인지 추적하기 어려워서 직접 만들게 됐습니다.
+A full-stack web application I built to keep track of all the companies I applied to during my job search. When applying to multiple companies at the same time, it gets hard to remember where I applied and what stage each one is at — so I built this to manage it all in one place.
 
-## 주요 기능
+## Features
 
-- **회원가입 / 로그인** — JWT 기반 인증, 비밀번호는 bcrypt로 해싱
-- **지원 현황 관리** — 회사명, 포지션, 지원 상태를 기록하고 수정
-- **상태 필터링** — Wishlist / Applied / Screening / Interview / Offer / Rejected / Withdrawn
-- **상태 변경 이력** — 상태가 바뀔 때마다 히스토리 기록
-- **대시보드 요약** — 상태별 지원 수 집계
+- **Sign up / Sign in** — JWT-based authentication with bcrypt password hashing
+- **Application management** — Add, update, and delete job applications with company, position, and status
+- **Status filtering** — Filter by Wishlist / Applied / Screening / Interview / Offer / Rejected / Withdrawn
+- **Status history** — Tracks every status change per application
+- **Dashboard summary** — Aggregated counts by status
 
-## 기술 스택
+## Tech Stack
 
 **Backend**
 - Node.js + Express.js
 - PostgreSQL (Supabase)
-- JWT 인증, bcrypt 비밀번호 해싱
-- Controller → Service → Repository 레이어 구조
+- JWT authentication, bcrypt password hashing
+- Controller → Service → Repository architecture
 
 **Frontend**
 - React 18 + Vite
 - Tailwind CSS
 - React Router v6
-- Axios 기반 API 클라이언트
 
 **Testing**
-- Playwright E2E 테스트
+- Playwright E2E tests
 
-## 프로젝트 구조
+## Project Structure
 
 ```
 .
 ├── backend/
 │   ├── src/
-│   │   ├── app.js                  # Express 앱 진입점
-│   │   ├── config/db.js            # PostgreSQL 연결
-│   │   ├── middleware/auth.js      # JWT 인증 미들웨어
+│   │   ├── app.js                  # Express entry point
+│   │   ├── config/db.js            # PostgreSQL connection
+│   │   ├── middleware/auth.js      # JWT auth middleware
 │   │   ├── modules/
-│   │   │   ├── auth/               # 회원가입 / 로그인
-│   │   │   ├── applications/       # 지원 CRUD
-│   │   │   └── dashboard/          # 요약 통계
+│   │   │   ├── auth/               # Register / Login
+│   │   │   ├── applications/       # Application CRUD
+│   │   │   └── dashboard/          # Summary stats
 │   │   └── utils/AppError.js
 │   └── package.json
 ├── frontend/
 │   ├── src/
 │   │   ├── pages/
-│   │   │   ├── LoginPage.jsx       # 로그인 / 회원가입
+│   │   │   ├── LoginPage.jsx       # Sign in / Sign up
 │   │   │   └── ApplicationsPage.jsx
 │   │   ├── components/
 │   │   │   └── CreateApplicationForm.jsx
@@ -54,23 +52,23 @@
 │   │   └── api/client.js
 │   └── package.json
 ├── db/
-│   ├── migrations/                 # 테이블 DDL SQL
-│   └── seeds/                      # 샘플 데이터
+│   ├── migrations/                 # Table DDL SQL
+│   └── seeds/                      # Sample data
 ├── e2e/
-│   └── app.spec.js                 # Playwright E2E 테스트
+│   └── app.spec.js                 # Playwright E2E tests
 └── playwright.config.js
 ```
 
-## 시작하기
+## Getting Started
 
-### 사전 요구사항
+### Prerequisites
 
 - Node.js 18+
-- PostgreSQL (또는 Supabase 계정)
+- PostgreSQL (or a Supabase account)
 
-### 1. 데이터베이스 설정
+### 1. Database Setup
 
-Supabase SQL Editor에서 `db/migrations/` 폴더의 SQL 파일을 순서대로 실행합니다.
+Run the SQL files in `db/migrations/` in order using the Supabase SQL Editor.
 
 ```sql
 -- 001_create_users.sql
@@ -79,19 +77,19 @@ Supabase SQL Editor에서 `db/migrations/` 폴더의 SQL 파일을 순서대로 
 -- ...
 ```
 
-### 2. 백엔드 실행
+### 2. Run the Backend
 
 ```bash
 cd backend
 npm install
 cp .env.example .env
-# .env에 DATABASE_URL, JWT_SECRET 입력
+# Fill in DATABASE_URL and JWT_SECRET in .env
 npm run dev
 ```
 
-백엔드는 `http://localhost:3001`에서 실행됩니다.
+Backend runs at `http://localhost:3001`.
 
-### 3. 프론트엔드 실행
+### 3. Run the Frontend
 
 ```bash
 cd frontend
@@ -99,20 +97,20 @@ npm install
 npm run dev
 ```
 
-프론트엔드는 `http://localhost:5173`에서 실행됩니다.
+Frontend runs at `http://localhost:5173`.
 
-### 4. E2E 테스트 실행
+### 4. Run E2E Tests
 
 ```bash
-# 프로젝트 루트에서
+# From the project root
 npm install
 npx playwright install chromium
 npx playwright test
 ```
 
-## 환경 변수
+## Environment Variables
 
-`backend/.env` 파일에 아래 값을 설정합니다.
+Set the following in `backend/.env`:
 
 ```env
 DATABASE_URL=postgresql://...
@@ -121,19 +119,14 @@ JWT_EXPIRES_IN=7d
 PORT=3001
 ```
 
-## API 엔드포인트
+## API Endpoints
 
-| Method | Path | 설명 |
-|--------|------|------|
-| POST | `/api/auth/register` | 회원가입 |
-| POST | `/api/auth/login` | 로그인 |
-| GET | `/api/applications` | 지원 목록 조회 (상태 필터 가능) |
-| POST | `/api/applications` | 지원 추가 |
-| PATCH | `/api/applications/:id` | 지원 수정 |
-| DELETE | `/api/applications/:id` | 지원 삭제 |
-| GET | `/api/dashboard/summary` | 상태별 요약 통계 |
-
-## 스크린샷
-
-로그인 페이지에서 Sign in / Sign up 탭으로 전환하며 로그인하거나 계정을 생성할 수 있습니다.
-로그인 후 지원 목록 페이지에서 회사와 포지션을 추가하고, 상태를 드롭다운으로 바로 변경할 수 있습니다.
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/auth/register` | Register a new user |
+| POST | `/api/auth/login` | Log in |
+| GET | `/api/applications` | List applications (filterable by status) |
+| POST | `/api/applications` | Create an application |
+| PATCH | `/api/applications/:id` | Update an application |
+| DELETE | `/api/applications/:id` | Delete an application |
+| GET | `/api/dashboard/summary` | Status summary stats |
