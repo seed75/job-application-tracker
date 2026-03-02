@@ -1,5 +1,35 @@
 import { test, expect } from '@playwright/test';
 
+test('guest login → sees demo data → read-only UI', async ({ page }) => {
+  await page.goto('/login');
+  await expect(page.getByTestId('login-page')).toBeVisible();
+
+  // Click the guest button
+  await page.getByRole('button', { name: 'Login as Guest' }).click();
+
+  // Should land on the applications page
+  await expect(page).toHaveURL('/');
+  await expect(page.getByTestId('applications-page')).toBeVisible();
+
+  // Guest banner must be visible
+  await expect(page.getByText('You are viewing a')).toBeVisible();
+
+  // Demo apps should be listed
+  const items = page.getByTestId('application-item');
+  await expect(items).toHaveCount(6);
+
+  // "New" button should not exist for guests
+  await expect(page.getByTestId('open-create-form')).not.toBeVisible();
+
+  // Status dropdowns should be disabled
+  const firstStatus = items.first().getByTestId('status-select');
+  await expect(firstStatus).toBeDisabled();
+
+  // Clicking "Sign in" in the banner should log out and go back to /login
+  await page.getByRole('link', { name: 'Sign in' }).or(page.getByRole('button', { name: 'Sign in' })).click();
+  await expect(page).toHaveURL('/login');
+});
+
 test('login → create application → change status', async ({ page }) => {
   // ── Login ────────────────────────────────────────────────────
   await page.goto('/login');

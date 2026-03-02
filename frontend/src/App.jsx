@@ -4,8 +4,8 @@ import LoginPage from './pages/LoginPage.jsx';
 import ApplicationsPage from './pages/ApplicationsPage.jsx';
 
 function ProtectedRoute({ children }) {
-  const { token } = useAuth();
-  return token ? children : <Navigate to="/login" replace />;
+  const { token, isGuest } = useAuth();
+  return (token || isGuest) ? children : <Navigate to="/login" replace />;
 }
 
 export default function App() {

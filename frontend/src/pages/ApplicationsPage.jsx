@@ -3,6 +3,15 @@ import { api } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import CreateApplicationForm from '../components/CreateApplicationForm.jsx';
 
+const DEMO_APPS = [
+  { id: 1, company: 'Google',    position: 'Software Engineer',      status: 'interview',  created_at: '2025-02-10' },
+  { id: 2, company: 'Apple',     position: 'Frontend Developer',     status: 'applied',    created_at: '2025-02-08' },
+  { id: 3, company: 'Stripe',    position: 'Full Stack Engineer',    status: 'offer',      created_at: '2025-01-28' },
+  { id: 4, company: 'Meta',      position: 'React Developer',        status: 'screening',  created_at: '2025-02-05' },
+  { id: 5, company: 'Netflix',   position: 'UI Engineer',            status: 'rejected',   created_at: '2025-01-20' },
+  { id: 6, company: 'Airbnb',    position: 'Product Engineer',       status: 'wishlist',   created_at: '2025-01-15' },
+];
+
 const STATUS_LABELS = {
   wishlist:  'Wishlist',
   applied:   'Applied',
@@ -28,16 +37,24 @@ export default function ApplicationsPage() {
   const [statusFilter, setFilter] = useState('');
   const [showForm, setShowForm]   = useState(false);
   const [error, setError]         = useState('');
-  const { logout } = useAuth();
+  const { logout, isGuest } = useAuth();
 
   useEffect(() => {
+    if (isGuest) {
+      const filtered = statusFilter
+        ? DEMO_APPS.filter(a => a.status === statusFilter)
+        : DEMO_APPS;
+      setApps(filtered);
+      return;
+    }
     const query = statusFilter ? `?status=${statusFilter}` : '';
     api.get(`/applications${query}`)
       .then(setApps)
       .catch(err => setError(err.message));
-  }, [statusFilter]);
+  }, [statusFilter, isGuest]);
 
   async function handleStatusChange(id, status) {
+    if (isGuest) return;
     try {
       const updated = await api.patch(`/applications/${id}`, { status });
       setApps(prev => prev.map(a => a.id === id ? updated : a));
@@ -47,6 +64,7 @@ export default function ApplicationsPage() {
   }
 
   async function handleDelete(id) {
+    if (isGuest) return;
     try {
       await api.del(`/applications/${id}`);
       setApps(prev => prev.filter(a => a.id !== id));
@@ -85,22 +103,39 @@ export default function ApplicationsPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-8">
+        {/* Guest banner */}
+        {isGuest && (
+          <div className="mb-6 flex items-center justify-between bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3">
+            <p className="text-sm text-indigo-700">
+              You are viewing a <strong>guest demo</strong> with sample data. Sign in to manage your own applications.
+            </p>
+            <button
+              onClick={logout}
+              className="ml-4 shrink-0 text-sm font-medium text-indigo-600 hover:text-indigo-800 underline transition"
+            >
+              Sign in
+            </button>
+          </div>
+        )}
+
         {/* Page title + actions */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-xl font-bold text-gray-900">Applications</h1>
             <p className="text-sm text-gray-400 mt-0.5">{apps.length} total</p>
           </div>
-          <button
-            onClick={() => setShowForm(v => !v)}
-            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm"
-            data-testid="open-create-form"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            {showForm ? 'Cancel' : 'New'}
-          </button>
+          {!isGuest && (
+            <button
+              onClick={() => setShowForm(v => !v)}
+              className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm"
+              data-testid="open-create-form"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              {showForm ? 'Cancel' : 'New'}
+            </button>
+          )}
         </div>
 
         {/* Create form */}
@@ -150,23 +185,26 @@ export default function ApplicationsPage() {
                 <select
                   value={app.status}
                   onChange={e => handleStatusChange(app.id, e.target.value)}
-                  className={`text-xs font-medium px-3 py-1.5 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition cursor-pointer ${STATUS_COLORS[app.status]}`}
+                  disabled={isGuest}
+                  className={`text-xs font-medium px-3 py-1.5 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition ${isGuest ? 'cursor-default opacity-80' : 'cursor-pointer'} ${STATUS_COLORS[app.status]}`}
                   data-testid="status-select"
                 >
                   {Object.keys(STATUS_LABELS).map(s => (
                     <option key={s} value={s}>{STATUS_LABELS[s]}</option>
                   ))}
                 </select>
-                <button
-                  onClick={() => handleDelete(app.id)}
-                  className="text-gray-300 hover:text-red-400 transition"
-                  data-testid="delete-application"
-                  title="Delete"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a1 1 0 011-1h4a1 1 0 011 1m-7 0H5" />
-                  </svg>
-                </button>
+                {!isGuest && (
+                  <button
+                    onClick={() => handleDelete(app.id)}
+                    className="text-gray-300 hover:text-red-400 transition"
+                    data-testid="delete-application"
+                    title="Delete"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a1 1 0 011-1h4a1 1 0 011 1m-7 0H5" />
+                    </svg>
+                  </button>
+                )}
               </div>
             </li>
           ))}

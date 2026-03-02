@@ -51,7 +51,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [toast, setToast]       = useState(null); // { message, type }
   const [loading, setLoading]   = useState(false);
-  const { login } = useAuth();
+  const { login, loginAsGuest } = useAuth();
   const navigate  = useNavigate();
 
   function showToast(message, type = 'error') {
@@ -77,6 +77,7 @@ export default function LoginPage() {
     if (lower.includes('email already in use')) return 'This email is already registered. Try signing in.';
     if (lower.includes('password') && lower.includes('8')) return 'Password must be at least 8 characters.';
     if (lower.includes('email')) return 'Please enter a valid email address.';
+    if (lower.includes('tenant') || lower.includes('econnrefused') || lower.includes('enotfound')) return 'Server is unavailable. Try again later or use Guest mode.';
     return raw;
   }
 
@@ -206,7 +207,25 @@ export default function LoginPage() {
               ? (mode === 'login' ? 'Signing in…' : 'Creating account…')
               : (mode === 'login' ? 'Sign in' : 'Create account')}
           </button>
+
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-gray-100" />
+            <span className="text-xs text-gray-400">or</span>
+            <div className="flex-1 h-px bg-gray-100" />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => { loginAsGuest(); navigate('/'); }}
+            className="w-full border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 text-gray-600 hover:text-indigo-700 py-2.5 rounded-xl text-sm font-medium transition"
+          >
+            Login as Guest
+          </button>
         </form>
+
+        <p className="text-center text-xs text-gray-400 mt-4">
+          Guest mode lets you explore the app with sample data — no account needed.
+        </p>
       </div>
     </div>
   );
