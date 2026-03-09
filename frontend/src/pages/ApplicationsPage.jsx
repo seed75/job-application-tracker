@@ -32,11 +32,16 @@ const STATUS_COLORS = {
   withdrawn: 'bg-gray-100 text-gray-500',
 };
 
+const STATUSES = ['wishlist', 'applied', 'screening', 'interview', 'offer', 'rejected', 'withdrawn'];
+
 export default function ApplicationsPage() {
   const [apps, setApps]           = useState([]);
   const [statusFilter, setFilter] = useState('');
   const [showForm, setShowForm]   = useState(false);
   const [error, setError]         = useState('');
+  const [editingApp, setEditingApp] = useState(null);
+  const [editForm, setEditForm]     = useState({});
+  const [editLoading, setEditLoading] = useState(false);
   const { logout, isGuest } = useAuth();
 
   useEffect(() => {
@@ -76,6 +81,30 @@ export default function ApplicationsPage() {
   function handleCreated(newApp) {
     setApps(prev => [newApp, ...prev]);
     setShowForm(false);
+  }
+
+  function openEdit(app) {
+    setEditingApp(app.id);
+    setEditForm({ company: app.company, position: app.position, status: app.status, notes: app.notes || '' });
+  }
+
+  function cancelEdit() {
+    setEditingApp(null);
+    setEditForm({});
+  }
+
+  async function handleEditSave(id) {
+    setEditLoading(true);
+    try {
+      const updated = await api.patch(`/applications/${id}`, editForm);
+      setApps(prev => prev.map(a => a.id === id ? updated : a));
+      setEditingApp(null);
+      setEditForm({});
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setEditLoading(false);
+    }
   }
 
   return (
@@ -174,38 +203,120 @@ export default function ApplicationsPage() {
           {apps.map(app => (
             <li
               key={app.id}
-              className="bg-white rounded-2xl border border-gray-100 px-5 py-4 flex items-center justify-between shadow-sm hover:shadow-md transition"
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition"
               data-testid="application-item"
             >
-              <div>
-                <p className="font-semibold text-gray-900" data-testid="app-company">{app.company}</p>
-                <p className="text-sm text-gray-400 mt-0.5" data-testid="app-position">{app.position}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <select
-                  value={app.status}
-                  onChange={e => handleStatusChange(app.id, e.target.value)}
-                  disabled={isGuest}
-                  className={`text-xs font-medium px-3 py-1.5 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition ${isGuest ? 'cursor-default opacity-80' : 'cursor-pointer'} ${STATUS_COLORS[app.status]}`}
-                  data-testid="status-select"
-                >
-                  {Object.keys(STATUS_LABELS).map(s => (
-                    <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-                  ))}
-                </select>
-                {!isGuest && (
-                  <button
-                    onClick={() => handleDelete(app.id)}
-                    className="text-gray-300 hover:text-red-400 transition"
-                    data-testid="delete-application"
-                    title="Delete"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a1 1 0 011-1h4a1 1 0 011 1m-7 0H5" />
-                    </svg>
-                  </button>
-                )}
-              </div>
+              {editingApp === app.id ? (
+                <div className="px-5 py-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="block text-xs font-medium text-gray-600">Company</label>
+                      <input
+                        type="text"
+                        value={editForm.company}
+                        onChange={e => setEditForm(prev => ({ ...prev, company: e.target.value }))}
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="block text-xs font-medium text-gray-600">Position</label>
+                      <input
+                        type="text"
+                        value={editForm.position}
+                        onChange={e => setEditForm(prev => ({ ...prev, position: e.target.value }))}
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-gray-600">Status</label>
+                    <select
+                      value={editForm.status}
+                      onChange={e => setEditForm(prev => ({ ...prev, status: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition bg-white"
+                    >
+                      {STATUSES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-gray-600">Notes</label>
+                    <textarea
+                      value={editForm.notes}
+                      onChange={e => setEditForm(prev => ({ ...prev, notes: e.target.value }))}
+                      placeholder="Optional notes..."
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition resize-none"
+                      rows={2}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEditSave(app.id)}
+                      disabled={editLoading}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-xl text-sm font-medium transition disabled:opacity-50 shadow-sm"
+                    >
+                      {editLoading ? 'Saving…' : 'Save'}
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="px-4 py-1.5 rounded-xl text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="px-5 py-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-gray-900" data-testid="app-company">{app.company}</p>
+                    <p className="text-sm text-gray-400 mt-0.5" data-testid="app-position">{app.position}</p>
+                    {app.notes && (
+                      <p className="text-xs text-gray-500 mt-1 max-w-md" data-testid="app-notes">{app.notes}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="relative inline-flex items-center">
+                      <select
+                        value={app.status}
+                        onChange={e => handleStatusChange(app.id, e.target.value)}
+                        disabled={isGuest}
+                        className={`appearance-none text-xs font-medium pl-3 pr-7 py-1.5 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition ${isGuest ? 'cursor-default opacity-80' : 'cursor-pointer'} ${STATUS_COLORS[app.status]}`}
+                        data-testid="status-select"
+                      >
+                        {Object.keys(STATUS_LABELS).map(s => (
+                          <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                        ))}
+                      </select>
+                      <svg className="pointer-events-none absolute right-2.5 w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                    {!isGuest && (
+                      <>
+                        <button
+                          onClick={() => openEdit(app)}
+                          className="text-gray-300 hover:text-indigo-500 transition"
+                          data-testid="edit-application"
+                          title="Edit"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M17 3a2.828 2.828 0 114 4L7.5 20.5 3 21l.5-4.5L17 3z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(app.id)}
+                          className="text-gray-300 hover:text-red-400 transition"
+                          data-testid="delete-application"
+                          title="Delete"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a1 1 0 011-1h4a1 1 0 011 1m-7 0H5" />
+                          </svg>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
             </li>
           ))}
         </ul>
